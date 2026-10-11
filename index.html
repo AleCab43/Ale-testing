@@ -1,0 +1,734 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Consortium Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: fixed sidebar (project + views) beside a scrolling work area; sidebar becomes a top bar on phones. */
+:root {
+  --bg: #f4f6fa;
+  --surface: #ffffff;
+  --sunk: #e9edf5;
+  --line: #d6dce8;
+  --fg: #172036;
+  --muted: #5d6781;
+  --accent: #1f3fa6;       /* EU-blue ink */
+  --accent-soft: #e2e8fb;
+  --gold: #e3a50b;         /* flag-star gold, used sparingly */
+  --ok: #1d7a4c;  --ok-soft: #dcf1e5;
+  --warn: #9a6200; --warn-soft: #fbedc9;
+  --bad: #b3261e; --bad-soft: #fadedb;
+  --info: #3b5bc4; --info-soft: #e2e8fb;
+  --shadow: 0 1px 2px rgba(23,32,54,.06), 0 4px 14px rgba(23,32,54,.06);
+  --f-display: "Schibsted Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --f-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --r: 8px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f1424; --surface: #171e33; --sunk: #1e2740; --line: #2c3654; --fg: #e6eaf5; --muted: #98a2bf;
+  --accent: #8fa8ff; --accent-soft: #24305a; --gold: #f2bf3c;
+  --ok: #6fd3a0; --ok-soft: #173a2c; --warn: #f0c46a; --warn-soft: #3d311a; --bad: #ff8f86; --bad-soft: #43201f;
+  --info: #a3b6ff; --info-soft: #24305a; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 18px rgba(0,0,0,.25); color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --bg: #0f1424; --surface: #171e33; --sunk: #1e2740; --line: #2c3654; --fg: #e6eaf5; --muted: #98a2bf;
+  --accent: #8fa8ff; --accent-soft: #24305a; --gold: #f2bf3c;
+  --ok: #6fd3a0; --ok-soft: #173a2c; --warn: #f0c46a; --warn-soft: #3d311a; --bad: #ff8f86; --bad-soft: #43201f;
+  --info: #a3b6ff; --info-soft: #24305a; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 18px rgba(0,0,0,.25); color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.5 var(--f-body); }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; letter-spacing: -.01em; }
+h1 { font-size: 1.6rem; font-weight: 800; }
+h2 { font-size: 1.1rem; font-weight: 700; }
+h3 { font-size: .95rem; font-weight: 700; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.mono, code { font-family: var(--f-mono); font-size: .86em; }
+.muted { color: var(--muted); }
+.label { font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+.num { font-variant-numeric: tabular-nums; }
+
+.app { display: grid; grid-template-columns: 240px minmax(0,1fr); height: 100%; }
+.side { background: var(--surface); border-right: 1px solid var(--line); display: flex; flex-direction: column; gap: 18px; padding: 18px 14px; overflow-y: auto; }
+.brand { display: flex; align-items: center; gap: 10px; padding-inline: 6px; }
+.brand svg { flex: none; }
+.brand b { font-family: var(--f-display); font-size: 1.05rem; font-weight: 800; }
+.proj-pick { display: grid; gap: 6px; }
+.proj-pick select { width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--r); background: var(--sunk); font-weight: 600; }
+.nav { display: grid; gap: 2px; }
+.nav button { all: unset; cursor: pointer; display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 6px; color: var(--muted); font-weight: 500; }
+.nav button:hover { background: var(--sunk); color: var(--fg); }
+.nav button[aria-current="page"] { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.nav button:focus-visible { outline: 2px solid var(--accent); }
+.nav .count { margin-left: auto; font: 500 .75rem var(--f-mono); }
+.side-foot { margin-top: auto; display: grid; gap: 6px; }
+
+.main { overflow-y: auto; padding: 24px 28px 48px; }
+.wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: 22px; }
+.head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px; }
+.head .t { display: grid; gap: 4px; min-width: 0; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: var(--r); border: 1px solid var(--line); background: var(--surface); cursor: pointer; font-weight: 500; white-space: nowrap; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn.ghost { background: transparent; border-color: transparent; color: var(--muted); }
+.btn.ghost:hover { color: var(--fg); background: var(--sunk); }
+.btn.danger { color: var(--bad); border-color: var(--bad-soft); }
+.btn.danger.armed { background: var(--bad); color: var(--surface); border-color: var(--bad); }
+.btn.sm { padding: 4px 9px; font-size: .85rem; }
+.inp { padding: 7px 10px; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); min-width: 0; }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 14px; min-width: 0; }
+.panel-h { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.grid2 { display: grid; grid-template-columns: minmax(0,1.2fr) minmax(0,1fr); gap: 22px; align-items: start; }
+
+.example { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; padding: 10px 14px; border: 1px dashed var(--gold); border-radius: var(--r); background: var(--warn-soft); color: var(--fg); }
+
+/* Project clock */
+.clock { display: grid; gap: 10px; }
+.clock-bar { position: relative; height: 34px; background: var(--sunk); border-radius: 6px; overflow: hidden; }
+.clock-fill { position: absolute; inset: 0 auto 0 0; background: var(--accent-soft); border-right: 2px solid var(--accent); }
+.clock-rp { position: absolute; top: 0; bottom: 0; border-left: 1px dashed var(--muted); }
+.clock-rp span { position: absolute; top: 4px; left: 5px; font: 500 .7rem var(--f-mono); color: var(--muted); white-space: nowrap; }
+.clock-now { position: absolute; bottom: 5px; font: 600 .75rem var(--f-mono); color: var(--accent); transform: translateX(-100%); padding-right: 6px; white-space: nowrap; }
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; }
+.stat { display: grid; gap: 2px; padding: 12px 14px; border-radius: var(--r); background: var(--sunk); }
+.stat b { font: 700 1.5rem var(--f-display); font-variant-numeric: tabular-nums; }
+.stat.alert b { color: var(--bad); }
+
+.list { display: grid; }
+.row { display: grid; grid-template-columns: 74px minmax(0,1fr) auto; gap: 12px; align-items: center; padding: 9px 4px; border-top: 1px solid var(--line); cursor: pointer; }
+.row:first-child { border-top: 0; }
+.row:hover { background: var(--sunk); }
+.row .when { font: 500 .78rem var(--f-mono); color: var(--muted); }
+.row .what { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.empty { padding: 18px; text-align: center; color: var(--muted); border: 1px dashed var(--line); border-radius: var(--r); }
+
+.wp-prog { display: grid; gap: 12px; }
+.wp-line { display: grid; grid-template-columns: 48px minmax(0,1fr) 44px; gap: 10px; align-items: center; }
+.wp-line .bar { height: 6px; border-radius: 3px; background: var(--sunk); overflow: hidden; margin-top: 5px; }
+.wp-line .bar i { display: block; height: 100%; }
+.wp-line .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.chip { display: inline-flex; align-items: center; gap: 5px; padding: 1px 8px; border-radius: 999px; font-size: .75rem; font-weight: 600; white-space: nowrap; background: var(--sunk); color: var(--muted); }
+.chip.ok { background: var(--ok-soft); color: var(--ok); }
+.chip.warn { background: var(--warn-soft); color: var(--warn); }
+.chip.bad { background: var(--bad-soft); color: var(--bad); }
+.chip.info { background: var(--info-soft); color: var(--info); }
+.wpdot { width: 9px; height: 9px; border-radius: 2px; display: inline-block; flex: none; }
+.tag { display: inline-flex; align-items: center; gap: 5px; font: 500 .75rem var(--f-mono); color: var(--muted); }
+
+/* Board */
+.board { display: grid; grid-template-columns: repeat(4, minmax(220px, 1fr)); gap: 14px; overflow-x: auto; padding-bottom: 6px; }
+.col { background: var(--sunk); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 160px; }
+.col.drop { outline: 2px dashed var(--accent); outline-offset: -2px; }
+.col-h { display: flex; justify-content: space-between; align-items: center; padding: 2px 4px 4px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 10px 12px; display: grid; gap: 6px; cursor: grab; box-shadow: var(--shadow); }
+.card:hover { border-color: var(--accent); }
+.card.dragging { opacity: .45; }
+.card .top { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+.card .meta { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; font-size: .8rem; color: var(--muted); }
+.prio-high { color: var(--bad); font-weight: 600; }
+
+/* Tables */
+.tbl-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+th { text-align: left; font-size: .72rem; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); font-weight: 600; padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+td { padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr { cursor: pointer; }
+tbody tr:hover td { background: var(--sunk); }
+td.code { font-family: var(--f-mono); font-size: .85rem; white-space: nowrap; }
+td.nw { white-space: nowrap; }
+
+/* Timeline */
+.gantt { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.g-inner { position: relative; }
+.g-row { display: grid; grid-template-columns: 230px auto; border-top: 1px solid var(--line); min-height: 30px; }
+.g-row:first-child { border-top: 0; }
+.g-lab { position: sticky; left: 0; z-index: 2; background: var(--surface); padding: 6px 10px; border-right: 1px solid var(--line); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .85rem; cursor: pointer; }
+.g-row.wp .g-lab { font-weight: 600; }
+.g-row.wp { background: var(--sunk); }
+.g-row.wp .g-lab { background: var(--sunk); }
+.g-track { position: relative; }
+.g-months { display: flex; }
+.g-months div { flex: none; text-align: center; font: 500 .68rem var(--f-mono); color: var(--muted); padding: 6px 0; border-left: 1px solid var(--line); }
+.g-months div.yr { color: var(--fg); font-weight: 600; }
+.g-bar { position: absolute; top: 7px; height: 16px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; padding-inline: 6px; font: 500 .68rem var(--f-mono); color: #fff; overflow: hidden; white-space: nowrap; }
+.g-row.wp .g-bar { top: 6px; height: 18px; }
+.g-bar.task { opacity: .78; }
+.g-bar.done { opacity: .4; }
+.g-mark { position: absolute; top: 5px; width: 20px; height: 20px; margin-left: -10px; cursor: pointer; display: grid; place-items: center; }
+.g-mark i { width: 11px; height: 11px; transform: rotate(45deg); background: var(--surface); border: 2px solid var(--fg); }
+.g-mark.ms i { border-radius: 50%; transform: none; background: var(--gold); border-color: var(--gold); }
+.g-mark.ok i { background: var(--ok); border-color: var(--ok); }
+.g-today { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--bad); z-index: 1; pointer-events: none; }
+.legend { display: flex; flex-wrap: wrap; gap: 16px; font-size: .8rem; color: var(--muted); align-items: center; }
+.legend span { display: inline-flex; gap: 6px; align-items: center; }
+
+/* Modal */
+.scrim { position: fixed; inset: 0; background: rgba(10,14,28,.45); display: grid; place-items: center; padding: 16px; z-index: 50; }
+.modal { background: var(--surface); border-radius: 12px; width: min(560px, 100%); max-height: 100%; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,.3); display: grid; }
+.modal-h { padding: 16px 20px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.modal form { padding: 16px 20px 20px; display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px 14px; }
+.fld { display: grid; gap: 4px; min-width: 0; }
+.fld.full { grid-column: 1 / -1; }
+.fld label { font-size: .78rem; font-weight: 600; color: var(--muted); }
+.fld .inp { width: 100%; }
+.fld textarea.inp { min-height: 76px; resize: vertical; }
+.fld .hint { font-size: .75rem; color: var(--muted); }
+.fld.check { grid-auto-flow: column; justify-content: start; align-items: center; gap: 8px; }
+.modal-f { grid-column: 1 / -1; display: flex; gap: 8px; justify-content: space-between; flex-wrap: wrap; padding-top: 6px; }
+.modal-f .r { display: flex; gap: 8px; margin-left: auto; }
+.backup { width: 100%; min-height: 160px; font: .78rem var(--f-mono); }
+
+.toast { position: fixed; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 9px 16px; border-radius: 8px; font-weight: 500; z-index: 60; box-shadow: var(--shadow); }
+
+@media (max-width: 900px) {
+  .grid2 { grid-template-columns: minmax(0,1fr); }
+  .stats { grid-template-columns: repeat(2, minmax(0,1fr)); }
+}
+@media (max-width: 720px) {
+  .app { grid-template-columns: minmax(0,1fr); grid-template-rows: auto minmax(0,1fr); }
+  .side { border-right: 0; border-bottom: 1px solid var(--line); padding: 12px 16px; gap: 10px; overflow: visible; }
+  .side-foot { display: none; }
+  .nav { grid-auto-flow: column; overflow-x: auto; gap: 4px; }
+  .nav button { white-space: nowrap; padding: 6px 10px; }
+  .nav .count { display: none; }
+  .main { padding: 18px 16px 40px; }
+  .g-row { grid-template-columns: 140px auto; }
+  .modal form { grid-template-columns: minmax(0,1fr); }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="brand">
+      <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><rect width="26" height="26" rx="6" fill="var(--accent)"/><g fill="var(--gold)"><circle cx="13" cy="5.5" r="1.4"/><circle cx="18.3" cy="7.7" r="1.4"/><circle cx="20.5" cy="13" r="1.4"/><circle cx="18.3" cy="18.3" r="1.4"/><circle cx="13" cy="20.5" r="1.4"/><circle cx="7.7" cy="18.3" r="1.4"/><circle cx="5.5" cy="13" r="1.4"/><circle cx="7.7" cy="7.7" r="1.4"/></g></svg>
+      <b>Consortium Desk</b>
+    </div>
+    <div class="proj-pick">
+      <span class="label">Project</span>
+      <select id="projSelect" aria-label="Current project"></select>
+    </div>
+    <nav class="nav" id="nav"></nav>
+    <div class="side-foot">
+      <button class="btn ghost" id="btnNewProj" type="button">+ New project</button>
+      <button class="btn ghost" id="btnBackup" type="button">Backup &amp; restore</button>
+    </div>
+  </aside>
+  <main class="main"><div class="wrap" id="view"></div></main>
+</div>
+<div id="modalRoot"></div>
+
+<script>
+(() => {
+'use strict';
+const KEY = 'consortium-desk.v1';
+const WP_COLORS = ['#3157d5', '#0f8a7e', '#c2551f', '#8a44c9', '#b8860b', '#c23b6b', '#2c7fb8', '#5f7d1e', '#7a5c3e', '#4a5a8a'];
+const TASK_STATUS = [['todo', 'To do'], ['doing', 'In progress'], ['review', 'In review'], ['done', 'Done']];
+const DEL_STATUS = [['planned', 'Planned'], ['drafting', 'Drafting'], ['review', 'Internal review'], ['submitted', 'Submitted'], ['approved', 'Approved by EC']];
+const DEL_TYPES = [['R', 'R — Document, report'], ['DEM', 'DEM — Demonstrator, pilot, prototype'], ['DEC', 'DEC — Website, dissemination, communication'], ['DATA', 'DATA — Data sets, microdata'], ['DMP', 'DMP — Data management plan'], ['ETHICS', 'ETHICS — Ethics'], ['SECURITY', 'SECURITY — Security'], ['OTHER', 'OTHER']];
+const DISS = [['PU', 'PU — Public'], ['SEN', 'SEN — Sensitive'], ['R-UE/EU-R', 'R-UE/EU-R — EU classified']];
+const PROGRAMMES = ['Horizon Europe', 'Erasmus+', 'Interreg', 'LIFE', 'Digital Europe', 'CERV', 'Creative Europe', 'EU4Health', 'CEF', 'Other'];
+const ROLES = ['Coordinator', 'Beneficiary', 'Affiliated entity', 'Associated partner', 'Subcontractor'];
+const VIEWS = [['overview', 'Overview'], ['board', 'Tasks'], ['timeline', 'Timeline'], ['deliverables', 'Deliverables & milestones'], ['wps', 'Work packages'], ['partners', 'Partners']];
+
+const uid = () => Math.random().toString(36).slice(2, 10);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const $ = (s, el = document) => el.querySelector(s);
+const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const today = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; };
+const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const fmtDate = s => { if (!s) return ''; const d = new Date(s + 'T00:00:00'); return `${d.getDate()} ${MON[d.getMonth()]} ${d.getFullYear()}`; };
+
+// ---------- Sample project (clearly marked as an example) ----------
+function sampleProject() {
+  const t = today();
+  const sy = t.getFullYear() - (t.getMonth() < 9 ? 1 : 0), sm = ((t.getMonth() + 3) % 12) + 1; // ~10 months in
+  const p = {
+    id: uid(), example: true, acronym: 'GREENGRID', title: 'Community-led smart grids for rural energy transition',
+    programme: 'Horizon Europe', grant: '101234567', start: `${sy}-${String(sm).padStart(2, '0')}`, duration: 36, periods: '18, 36',
+    partners: [], wps: [], tasks: [], deliverables: [], milestones: []
+  };
+  const P = (short, name, country, role) => { const x = { id: uid(), short, name, country, role, contact: '' }; p.partners.push(x); return x.id; };
+  const ngu = P('NGU', 'Northgate University', 'BE', 'Coordinator');
+  const cel = P('CEL', 'Coastline Energy Lab', 'PT', 'Beneficiary');
+  const vrc = P('VRC', 'Valley Rural Cooperative', 'IT', 'Beneficiary');
+  const dsa = P('DSA', 'Datastream Analytics SME', 'EE', 'Beneficiary');
+  const W = (num, title, lead, start, end) => { const x = { id: uid(), num, title, lead, start, end }; p.wps.push(x); return x.id; };
+  const w1 = W(1, 'Project management and coordination', ngu, 1, 36);
+  const w2 = W(2, 'User requirements and co-design', vrc, 1, 12);
+  const w3 = W(3, 'Smart grid platform development', dsa, 6, 30);
+  const w4 = W(4, 'Pilots in three rural communities', cel, 13, 34);
+  const w5 = W(5, 'Dissemination, communication and exploitation', ngu, 1, 36);
+  const due = n => { const d = today(); d.setDate(d.getDate() + n); return iso(d); };
+  const T = (code, title, wp, lead, status, start, end, extra = {}) => p.tasks.push({ id: uid(), code, title, wp, lead, assignee: '', status, priority: 'normal', start, end, due: '', notes: '', ...extra });
+  T('T1.1', 'Consortium management and governance', w1, ngu, 'doing', 1, 36);
+  T('T1.2', 'Financial reporting and amendments', w1, ngu, 'doing', 1, 36, { due: due(12), priority: 'high', notes: 'Collect cost statements from all partners before the RP1 report.' });
+  T('T1.3', 'Data management plan', w1, dsa, 'done', 1, 6);
+  T('T2.1', 'Stakeholder workshops', w2, vrc, 'done', 1, 8);
+  T('T2.2', 'Requirements and use-case definition', w2, vrc, 'review', 4, 12, { due: due(5), assignee: 'Maria R.' });
+  T('T3.1', 'Platform architecture', w3, dsa, 'doing', 6, 14, { due: due(20) });
+  T('T3.2', 'Forecasting and flexibility module', w3, cel, 'todo', 10, 26);
+  T('T3.3', 'Integration and testing', w3, dsa, 'todo', 20, 30);
+  T('T4.1', 'Pilot site preparation', w4, cel, 'todo', 13, 18);
+  T('T4.2', 'Pilot operation and monitoring', w4, vrc, 'todo', 18, 34);
+  T('T5.1', 'Website, social media and visual identity', w5, ngu, 'done', 1, 4);
+  T('T5.2', 'Exploitation and business plan', w5, dsa, 'todo', 12, 36, { due: due(-3), notes: 'Draft outline was promised at the last plenary.' });
+  const D = (code, title, wp, lead, type, diss, month, status) => p.deliverables.push({ id: uid(), code, title, wp, lead, type, diss, month, status });
+  D('D1.1', 'Project management handbook', w1, ngu, 'R', 'SEN', 3, 'approved');
+  D('D1.2', 'Data management plan', w1, dsa, 'DMP', 'PU', 6, 'submitted');
+  D('D2.1', 'Stakeholder workshop report', w2, vrc, 'R', 'PU', 9, 'submitted');
+  D('D2.2', 'User requirements and use cases', w2, vrc, 'R', 'PU', 12, 'review');
+  D('D3.1', 'Platform architecture specification', w3, dsa, 'R', 'SEN', 14, 'drafting');
+  D('D3.2', 'Platform prototype v1', w3, dsa, 'DEM', 'PU', 22, 'planned');
+  D('D4.1', 'Pilot plan', w4, cel, 'R', 'SEN', 16, 'planned');
+  D('D5.1', 'Project website', w5, ngu, 'DEC', 'PU', 4, 'approved');
+  D('D5.2', 'Dissemination and communication plan', w5, ngu, 'R', 'PU', 6, 'approved');
+  D('D5.3', 'Exploitation plan, first version', w5, dsa, 'R', 'SEN', 18, 'planned');
+  const M = (code, title, wp, month, verification, achieved) => p.milestones.push({ id: uid(), code, title, wp, month, verification, achieved });
+  M('MS1', 'Requirements frozen', w2, 12, 'D2.2 submitted', false);
+  M('MS2', 'Architecture validated', w3, 14, 'D3.1 approved by the steering committee', false);
+  M('MS3', 'Pilots launched', w4, 18, 'All three pilot sites operational', false);
+  M('MS4', 'Website online', w5, 4, 'D5.1 live', true);
+  return p;
+}
+
+// ---------- State ----------
+function load() {
+  try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && Array.isArray(s.projects) && s.projects.length) return s; } catch (e) { }
+  const p = sampleProject();
+  return { projects: [p], current: p.id, view: 'overview', filters: {} };
+}
+const S = load();
+S.filters = S.filters || {};
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { } }
+const P = () => S.projects.find(p => p.id === S.current) || S.projects[0];
+
+// ---------- Project calendar helpers ----------
+const startParts = p => { const [y, m] = (p.start || iso(today()).slice(0, 7)).split('-').map(Number); return [y, m]; };
+const monthEnd = (p, M) => { const [y, m] = startParts(p); return new Date(y, m - 1 + Number(M), 0); };      // last day of project month M
+const monthLabel = (p, M) => { const d = monthEnd(p, M); return `${MON[d.getMonth()]} ${d.getFullYear()}`; };
+function currentM(p) { const [y, m] = startParts(p); const t = today(); return (t.getFullYear() - y) * 12 + (t.getMonth() + 1 - m) + 1; }
+const periods = p => String(p.periods || '').split(/[,\s]+/).map(Number).filter(n => n > 0).sort((a, b) => a - b);
+const wpById = (p, id) => p.wps.find(w => w.id === id);
+const wpColor = (p, id) => { const i = p.wps.findIndex(w => w.id === id); return i < 0 ? 'var(--muted)' : WP_COLORS[i % WP_COLORS.length]; };
+const ptShort = (p, id) => (p.partners.find(x => x.id === id) || {}).short || '—';
+const wpTag = (p, id) => { const w = wpById(p, id); return w ? `<span class="tag"><i class="wpdot" style="background:${wpColor(p, id)}"></i>WP${w.num}</span>` : '<span class="tag">—</span>'; };
+const sortWps = p => p.wps.slice().sort((a, b) => a.num - b.num);
+const codeSort = (a, b) => String(a.code).localeCompare(String(b.code), undefined, { numeric: true });
+
+function taskDue(p, t) { return t.due ? new Date(t.due + 'T00:00:00') : (t.end ? monthEnd(p, t.end) : null); }
+const taskOverdue = (p, t) => t.status !== 'done' && taskDue(p, t) && taskDue(p, t) < today();
+const delDone = d => d.status === 'submitted' || d.status === 'approved';
+const delOverdue = (p, d) => !delDone(d) && monthEnd(p, d.month) < today();
+const msOverdue = (p, m) => !m.achieved && monthEnd(p, m.month) < today();
+
+const statusChip = (list, v) => {
+  const label = (list.find(x => x[0] === v) || [, v])[1];
+  const cls = { done: 'ok', approved: 'ok', submitted: 'ok', doing: 'info', drafting: 'info', review: 'warn' }[v] || '';
+  return `<span class="chip ${cls}">${esc(label)}</span>`;
+};
+
+// ---------- Modal form ----------
+function openForm({ title, fields, data = {}, onSave, onDelete, deleteLabel = 'Delete' }) {
+  const root = $('#modalRoot');
+  const f = fields.map(fd => {
+    const id = 'f_' + fd.k, v = data[fd.k] ?? fd.def ?? '';
+    let ctl;
+    if (fd.type === 'select') ctl = `<select class="inp" id="${id}" name="${fd.k}">${fd.options.map(o => { const [ov, ol] = Array.isArray(o) ? o : [o, o]; return `<option value="${esc(ov)}"${String(ov) === String(v) ? ' selected' : ''}>${esc(ol)}</option>`; }).join('')}</select>`;
+    else if (fd.type === 'textarea') ctl = `<textarea class="inp" id="${id}" name="${fd.k}">${esc(v)}</textarea>`;
+    else if (fd.type === 'checkbox') ctl = `<input type="checkbox" id="${id}" name="${fd.k}"${v ? ' checked' : ''}>`;
+    else ctl = `<input class="inp" id="${id}" name="${fd.k}" type="${fd.type || 'text'}" value="${esc(v)}"${fd.req ? ' required' : ''}${fd.min != null ? ` min="${fd.min}"` : ''}${fd.max != null ? ` max="${fd.max}"` : ''}${fd.ph ? ` placeholder="${esc(fd.ph)}"` : ''}>`;
+    if (fd.type === 'checkbox') return `<div class="fld check ${fd.full ? 'full' : ''}">${ctl}<label for="${id}">${esc(fd.label)}</label></div>`;
+    return `<div class="fld ${fd.full ? 'full' : ''}"><label for="${id}">${esc(fd.label)}</label>${ctl}${fd.hint ? `<span class="hint">${esc(fd.hint)}</span>` : ''}</div>`;
+  }).join('');
+  root.innerHTML = `<div class="scrim" id="scrim"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+    <div class="modal-h"><h2 id="mTitle">${esc(title)}</h2><button class="btn ghost sm" type="button" id="mClose" aria-label="Close">✕</button></div>
+    <form id="mForm" novalidate>${f}<div class="modal-f">${onDelete ? `<button class="btn danger" type="button" id="mDel">${esc(deleteLabel)}</button>` : ''}<div class="r"><button class="btn" type="button" id="mCancel">Cancel</button><button class="btn primary" type="submit">Save</button></div></div></form>
+  </div></div>`;
+  const close = () => { root.innerHTML = ''; document.removeEventListener('keydown', onKey); };
+  const onKey = e => { if (e.key === 'Escape') close(); };
+  document.addEventListener('keydown', onKey);
+  $('#mClose').onclick = $('#mCancel').onclick = close;
+  $('#scrim').onmousedown = e => { if (e.target.id === 'scrim') close(); };
+  const firstInput = $('#mForm .inp'); if (firstInput) firstInput.focus();
+  $('#mForm').onsubmit = e => {
+    e.preventDefault();
+    const out = {};
+    for (const fd of fields) {
+      const el = $('#f_' + fd.k);
+      let v = fd.type === 'checkbox' ? el.checked : el.value.trim();
+      if (fd.type === 'number') v = v === '' ? '' : Number(v);
+      if (fd.req && (v === '' || v == null)) { el.focus(); el.setCustomValidity('Required'); el.reportValidity(); el.oninput = () => el.setCustomValidity(''); return; }
+      out[fd.k] = v;
+    }
+    onSave(out); close(); save(); render();
+  };
+  if (onDelete) {
+    const b = $('#mDel');
+    b.onclick = () => {
+      if (!b.classList.contains('armed')) { b.classList.add('armed'); b.textContent = 'Click again to confirm'; return; }
+      onDelete(); close(); save(); render();
+    };
+  }
+}
+function toast(msg) {
+  const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; t.setAttribute('role', 'status');
+  document.body.appendChild(t); setTimeout(() => t.remove(), 2200);
+}
+
+// ---------- Entity editors ----------
+const partnerOpts = p => [['', '—'], ...p.partners.map(x => [x.id, `${x.short} — ${x.name}`])];
+const wpOpts = p => [['', '—'], ...sortWps(p).map(w => [w.id, `WP${w.num} — ${w.title}`])];
+
+function editProject(proj, isNew) {
+  openForm({
+    title: isNew ? 'New project' : 'Project details',
+    data: proj || { programme: 'Horizon Europe', duration: 36, start: iso(today()).slice(0, 7), periods: '18, 36' },
+    fields: [
+      { k: 'acronym', label: 'Acronym', req: true, ph: 'e.g. GREENGRID' },
+      { k: 'programme', label: 'Programme', type: 'select', options: PROGRAMMES },
+      { k: 'title', label: 'Full title', full: true },
+      { k: 'grant', label: 'Grant agreement no.', ph: '101…' },
+      { k: 'start', label: 'Start month (M1)', type: 'month', req: true },
+      { k: 'duration', label: 'Duration (months)', type: 'number', min: 1, max: 120, req: true },
+      { k: 'periods', label: 'Reporting periods end at month', hint: 'Comma-separated, e.g. 18, 36' },
+    ],
+    onSave: v => {
+      if (isNew) { const np = { id: uid(), partners: [], wps: [], tasks: [], deliverables: [], milestones: [], ...v }; S.projects.push(np); S.current = np.id; S.view = 'overview'; }
+      else { Object.assign(proj, v); delete proj.example; }
+    },
+    onDelete: isNew ? null : () => {
+      S.projects = S.projects.filter(x => x.id !== proj.id);
+      if (!S.projects.length) { const np = { id: uid(), acronym: 'NEW', title: '', programme: 'Horizon Europe', start: iso(today()).slice(0, 7), duration: 36, periods: '18, 36', partners: [], wps: [], tasks: [], deliverables: [], milestones: [] }; S.projects.push(np); }
+      S.current = S.projects[0].id; toast('Project deleted');
+    }, deleteLabel: 'Delete project'
+  });
+}
+function editPartner(p, x) {
+  openForm({
+    title: x ? `Partner ${x.short}` : 'Add partner', data: x || { role: p.partners.length ? 'Beneficiary' : 'Coordinator' },
+    fields: [
+      { k: 'short', label: 'Short name', req: true, ph: 'e.g. UNIX' },
+      { k: 'country', label: 'Country code', ph: 'e.g. DE' },
+      { k: 'name', label: 'Legal name', full: true, req: true },
+      { k: 'role', label: 'Role', type: 'select', options: ROLES },
+      { k: 'contact', label: 'Contact person' },
+    ],
+    onSave: v => x ? Object.assign(x, v) : p.partners.push({ id: uid(), ...v }),
+    onDelete: x ? () => { p.partners = p.partners.filter(y => y.id !== x.id); } : null
+  });
+}
+function editWp(p, w) {
+  const next = Math.max(0, ...p.wps.map(x => x.num)) + 1;
+  openForm({
+    title: w ? `WP${w.num}` : 'Add work package', data: w || { num: next, start: 1, end: p.duration },
+    fields: [
+      { k: 'num', label: 'WP number', type: 'number', min: 1, req: true },
+      { k: 'lead', label: 'Lead partner', type: 'select', options: partnerOpts(p) },
+      { k: 'title', label: 'Title', full: true, req: true },
+      { k: 'start', label: 'Start month', type: 'number', min: 1, max: p.duration, req: true },
+      { k: 'end', label: 'End month', type: 'number', min: 1, max: p.duration, req: true },
+    ],
+    onSave: v => w ? Object.assign(w, v) : p.wps.push({ id: uid(), ...v }),
+    onDelete: w ? () => { p.wps = p.wps.filter(y => y.id !== w.id); } : null
+  });
+}
+function nextCode(list, prefix, wp, p) {
+  const w = wpById(p, wp); if (!w) return prefix + (list.length + 1);
+  const n = list.filter(x => x.wp === wp).length + 1; return `${prefix}${w.num}.${n}`;
+}
+function editTask(p, t, preset = {}) {
+  const wp = t ? t.wp : (preset.wp || (sortWps(p)[0] || {}).id || '');
+  openForm({
+    title: t ? `${t.code || 'Task'}` : 'Add task',
+    data: t || { code: nextCode(p.tasks, 'T', wp, p), wp, status: 'todo', priority: 'normal', start: Math.max(1, Math.min(currentM(p), p.duration)), end: Math.max(1, Math.min(currentM(p) + 2, p.duration)), ...preset },
+    fields: [
+      { k: 'code', label: 'Code', ph: 'T1.1' },
+      { k: 'wp', label: 'Work package', type: 'select', options: wpOpts(p) },
+      { k: 'title', label: 'Title', full: true, req: true },
+      { k: 'lead', label: 'Lead partner', type: 'select', options: partnerOpts(p) },
+      { k: 'assignee', label: 'Assigned to', ph: 'Person' },
+      { k: 'status', label: 'Status', type: 'select', options: TASK_STATUS },
+      { k: 'priority', label: 'Priority', type: 'select', options: [['low', 'Low'], ['normal', 'Normal'], ['high', 'High']] },
+      { k: 'start', label: 'Start month', type: 'number', min: 1, max: p.duration },
+      { k: 'end', label: 'End month', type: 'number', min: 1, max: p.duration },
+      { k: 'due', label: 'Next deadline (optional)', type: 'date', full: true, hint: 'If empty, the task end month counts as the deadline.' },
+      { k: 'notes', label: 'Notes', type: 'textarea', full: true },
+    ],
+    onSave: v => t ? Object.assign(t, v) : p.tasks.push({ id: uid(), ...v }),
+    onDelete: t ? () => { p.tasks = p.tasks.filter(y => y.id !== t.id); } : null
+  });
+}
+function editDeliverable(p, d) {
+  const wp = d ? d.wp : (sortWps(p)[0] || {}).id || '';
+  openForm({
+    title: d ? d.code : 'Add deliverable',
+    data: d || { code: nextCode(p.deliverables, 'D', wp, p), wp, type: 'R', diss: 'PU', status: 'planned', month: Math.min(currentM(p) + 3, p.duration) },
+    fields: [
+      { k: 'code', label: 'Number', ph: 'D1.1', req: true },
+      { k: 'wp', label: 'Work package', type: 'select', options: wpOpts(p) },
+      { k: 'title', label: 'Title', full: true, req: true },
+      { k: 'lead', label: 'Lead beneficiary', type: 'select', options: partnerOpts(p) },
+      { k: 'month', label: 'Due month (M)', type: 'number', min: 1, max: p.duration, req: true },
+      { k: 'type', label: 'Type', type: 'select', options: DEL_TYPES },
+      { k: 'diss', label: 'Dissemination level', type: 'select', options: DISS },
+      { k: 'status', label: 'Status', type: 'select', options: DEL_STATUS, full: true },
+    ],
+    onSave: v => d ? Object.assign(d, v) : p.deliverables.push({ id: uid(), ...v }),
+    onDelete: d ? () => { p.deliverables = p.deliverables.filter(y => y.id !== d.id); } : null
+  });
+}
+function editMilestone(p, m) {
+  openForm({
+    title: m ? m.code : 'Add milestone',
+    data: m || { code: 'MS' + (p.milestones.length + 1), month: Math.min(currentM(p) + 3, p.duration), wp: (sortWps(p)[0] || {}).id || '' },
+    fields: [
+      { k: 'code', label: 'Number', req: true },
+      { k: 'wp', label: 'Related WP', type: 'select', options: wpOpts(p) },
+      { k: 'title', label: 'Title', full: true, req: true },
+      { k: 'month', label: 'Due month (M)', type: 'number', min: 1, max: p.duration, req: true },
+      { k: 'achieved', label: 'Achieved', type: 'checkbox' },
+      { k: 'verification', label: 'Means of verification', full: true },
+    ],
+    onSave: v => m ? Object.assign(m, v) : p.milestones.push({ id: uid(), ...v }),
+    onDelete: m ? () => { p.milestones = p.milestones.filter(y => y.id !== m.id); } : null
+  });
+}
+
+// ---------- Views ----------
+function header(p, title, actions = '') {
+  return `${p.example ? `<div class="example"><span><b>Example project.</b> This is sample data so you can see how things work. Edit it, or start your own.</span><span class="toolbar"><button class="btn sm" data-act="newproj">Start my project</button><button class="btn sm ghost" data-act="dropsample">Remove example</button></span></div>` : ''}
+  <div class="head"><div class="t"><span class="label">${esc(p.acronym)} · ${esc(p.programme || '')}${p.grant ? ' · GA ' + esc(p.grant) : ''}</span><h1>${esc(title)}</h1></div><div class="toolbar">${actions}</div></div>`;
+}
+
+function vOverview(p) {
+  const M = currentM(p), dur = Number(p.duration) || 1, clampM = Math.max(0, Math.min(M, dur));
+  const rps = periods(p);
+  const nextRp = rps.find(r => r >= M);
+  const openTasks = p.tasks.filter(t => t.status !== 'done').length;
+  const overdue = p.tasks.filter(t => taskOverdue(p, t)).length + p.deliverables.filter(d => delOverdue(p, d)).length + p.milestones.filter(m => msOverdue(p, m)).length;
+  const in90 = new Date(today()); in90.setDate(in90.getDate() + 90);
+  const delSoon = p.deliverables.filter(d => !delDone(d) && monthEnd(p, d.month) <= in90).length;
+
+  const items = [];
+  p.deliverables.filter(d => !delDone(d)).forEach(d => items.push({ date: monthEnd(p, d.month), when: `M${d.month}`, kind: 'Deliverable', html: `<span class="mono">${esc(d.code)}</span> ${esc(d.title)}`, late: delOverdue(p, d), open: () => editDeliverable(p, d), chip: statusChip(DEL_STATUS, d.status) }));
+  p.milestones.filter(m => !m.achieved).forEach(m => items.push({ date: monthEnd(p, m.month), when: `M${m.month}`, kind: 'Milestone', html: `<span class="mono">${esc(m.code)}</span> ${esc(m.title)}`, late: msOverdue(p, m), open: () => editMilestone(p, m), chip: '<span class="chip">Milestone</span>' }));
+  p.tasks.filter(t => t.status !== 'done' && t.due).forEach(t => items.push({ date: taskDue(p, t), when: fmtDate(t.due).replace(/ \d{4}$/, ''), kind: 'Task', html: `<span class="mono">${esc(t.code)}</span> ${esc(t.title)}`, late: taskOverdue(p, t), open: () => editTask(p, t), chip: statusChip(TASK_STATUS, t.status) }));
+  const horizon = new Date(today()); horizon.setDate(horizon.getDate() + 120);
+  const upcoming = items.filter(i => i.late || i.date <= horizon).sort((a, b) => a.date - b.date).slice(0, 10);
+  window.__ov = upcoming;
+
+  const wpRows = sortWps(p).map(w => {
+    const ts = p.tasks.filter(t => t.wp === w.id), ds = p.deliverables.filter(d => d.wp === w.id);
+    const total = ts.length + ds.length, done = ts.filter(t => t.status === 'done').length + ds.filter(delDone).length;
+    const pct = total ? Math.round(100 * done / total) : 0;
+    return `<div class="wp-line"><span class="tag"><i class="wpdot" style="background:${wpColor(p, w.id)}"></i>WP${w.num}</span>
+      <div style="min-width:0"><div class="nm">${esc(w.title)} <span class="muted">· ${esc(ptShort(p, w.lead))} · M${w.start}–M${w.end}</span></div><div class="bar"><i style="width:${pct}%;background:${wpColor(p, w.id)}"></i></div></div>
+      <span class="num mono" style="text-align:right">${pct}%</span></div>`;
+  }).join('') || `<div class="empty">No work packages yet. <button class="btn sm" data-act="addwp">Add WP1</button></div>`;
+
+  const rpMarks = rps.filter(r => r < dur).map(r => `<div class="clock-rp" style="left:${100 * r / dur}%"><span>RP end M${r}</span></div>`).join('');
+  const status = M < 1 ? `Starts ${monthLabel(p, 1)}` : M > dur ? 'Project ended' : `Month ${M} of ${dur}`;
+  return header(p, p.title || p.acronym, `<button class="btn" data-act="editproj">Project details</button><button class="btn primary" data-act="addtask">+ Task</button>`) + `
+  <section class="panel clock">
+    <div class="panel-h"><h2>${status}</h2><span class="muted">${monthLabel(p, 1)} – ${monthLabel(p, dur)}${nextRp ? ` · next periodic report covers up to <b>M${nextRp}</b> (${monthLabel(p, nextRp)})` : ''}</span></div>
+    <div class="clock-bar" role="img" aria-label="${esc(status)}"><div class="clock-fill" style="width:${100 * clampM / dur}%"></div>${rpMarks}${M >= 1 && M <= dur ? `<div class="clock-now" style="left:${100 * clampM / dur}%">M${M}</div>` : ''}</div>
+    <div class="stats">
+      <div class="stat"><span class="label">Open tasks</span><b>${openTasks}</b></div>
+      <div class="stat"><span class="label">Deliverables due ≤ 90 days</span><b>${delSoon}</b></div>
+      <div class="stat"><span class="label">Milestones reached</span><b>${p.milestones.filter(m => m.achieved).length}/${p.milestones.length}</b></div>
+      <div class="stat ${overdue ? 'alert' : ''}"><span class="label">Overdue</span><b>${overdue}</b></div>
+    </div>
+  </section>
+  <div class="grid2">
+    <section class="panel"><div class="panel-h"><h2>Coming up</h2><span class="muted">next 4 months and anything late</span></div>
+      <div class="list">${upcoming.length ? upcoming.map((i, n) => `<div class="row" data-ov="${n}" tabindex="0"><span class="when">${esc(i.when)}</span><span class="what">${i.html} <span class="muted">· ${i.kind}</span></span>${i.late ? '<span class="chip bad">Overdue</span>' : i.chip}</div>`).join('') : '<div class="empty">Nothing due in the next four months.</div>'}</div>
+    </section>
+    <section class="panel"><div class="panel-h"><h2>Work package progress</h2><span class="muted">tasks + deliverables done</span></div><div class="wp-prog">${wpRows}</div></section>
+  </div>`;
+}
+
+function filterBar(p, extra = '') {
+  const f = S.filters;
+  return `<select class="inp" id="fWp" aria-label="Filter by work package"><option value="">All WPs</option>${sortWps(p).map(w => `<option value="${w.id}"${f.wp === w.id ? ' selected' : ''}>WP${w.num}</option>`).join('')}</select>
+  <select class="inp" id="fPt" aria-label="Filter by partner"><option value="">All partners</option>${p.partners.map(x => `<option value="${x.id}"${f.pt === x.id ? ' selected' : ''}>${esc(x.short)}</option>`).join('')}</select>${extra}`;
+}
+const passes = (x) => (!S.filters.wp || x.wp === S.filters.wp) && (!S.filters.pt || x.lead === S.filters.pt);
+
+function vBoard(p) {
+  const q = (S.filters.q || '').toLowerCase();
+  const tasks = p.tasks.filter(passes).filter(t => !q || `${t.code} ${t.title} ${t.assignee} ${t.notes}`.toLowerCase().includes(q)).sort(codeSort);
+  const cols = TASK_STATUS.map(([k, label]) => {
+    const ts = tasks.filter(t => t.status === k);
+    return `<div class="col" data-col="${k}"><div class="col-h"><h3>${label}</h3><span class="mono muted">${ts.length}</span></div>
+    ${ts.map(t => {
+      const late = taskOverdue(p, t);
+      return `<article class="card" draggable="true" data-task="${t.id}" tabindex="0">
+        <div class="top">${wpTag(p, t.wp)}<span class="mono muted">${esc(t.code || '')}</span></div>
+        <div>${esc(t.title)}</div>
+        <div class="meta"><span>${esc(ptShort(p, t.lead))}${t.assignee ? ' · ' + esc(t.assignee) : ''}</span>${t.start ? `<span class="mono">M${t.start}–M${t.end}</span>` : ''}${t.priority === 'high' ? '<span class="prio-high">High</span>' : ''}${t.due ? `<span class="${late ? 'chip bad' : ''}">${late ? 'Overdue · ' : 'Due '}${fmtDate(t.due)}</span>` : late ? '<span class="chip bad">Past end month</span>' : ''}</div>
+      </article>`;
+    }).join('')}
+    <button class="btn ghost sm" data-addin="${k}" type="button">+ Add</button></div>`;
+  }).join('');
+  return header(p, 'Tasks', `${filterBar(p, `<input class="inp" id="fQ" type="search" placeholder="Search tasks" value="${esc(S.filters.q || '')}">`)}<button class="btn primary" data-act="addtask">+ Task</button>`) +
+    `<p class="muted" style="margin:0">Drag cards between columns to change status, or click a card to edit it.</p><div class="board">${cols}</div>`;
+}
+
+function vTimeline(p) {
+  const dur = Number(p.duration) || 1, cw = dur > 48 ? 22 : 30, W = dur * cw, M = currentM(p);
+  const [sy, sm] = startParts(p);
+  const months = Array.from({ length: dur }, (_, i) => { const mm = (sm - 1 + i) % 12; return `<div style="width:${cw}px" class="${mm === 0 ? 'yr' : ''}" title="${monthLabel(p, i + 1)}">${mm === 0 ? "'" + String(sy + Math.floor((sm - 1 + i) / 12)).slice(2) : i + 1}</div>`; }).join('');
+  const bar = (s, e, color, cls, label, attr) => `<div class="g-bar ${cls}" ${attr} style="left:${(s - 1) * cw + 2}px;width:${Math.max(1, e - s + 1) * cw - 4}px;background:${color}" title="${esc(label)} · M${s}–M${e}">${esc(label)}</div>`;
+  const rows = [];
+  if (p.milestones.length) rows.push(`<div class="g-row"><div class="g-lab muted">Milestones</div><div class="g-track" style="width:${W}px">${p.milestones.map(m => `<div class="g-mark ms ${m.achieved ? 'ok' : ''}" data-ms="${m.id}" style="left:${(m.month - .5) * cw}px" title="${esc(m.code)} ${esc(m.title)} · M${m.month}"><i></i></div>`).join('')}</div></div>`);
+  sortWps(p).filter(w => !S.filters.wp || w.id === S.filters.wp).forEach(w => {
+    const c = wpColor(p, w.id);
+    const dl = p.deliverables.filter(d => d.wp === w.id).map(d => `<div class="g-mark ${delDone(d) ? 'ok' : ''}" data-del="${d.id}" style="left:${(d.month - .5) * cw}px" title="${esc(d.code)} ${esc(d.title)} · M${d.month}"><i></i></div>`).join('');
+    rows.push(`<div class="g-row wp"><div class="g-lab" data-wp="${w.id}" title="${esc(w.title)}"><span class="tag"><i class="wpdot" style="background:${c}"></i>WP${w.num}</span> ${esc(w.title)}</div><div class="g-track" style="width:${W}px">${bar(w.start, w.end, c, '', `WP${w.num}`, `data-wp="${w.id}"`)}${dl}</div></div>`);
+    p.tasks.filter(t => t.wp === w.id && t.start && t.end).filter(passes).sort(codeSort).forEach(t => {
+      rows.push(`<div class="g-row"><div class="g-lab" data-task="${t.id}" title="${esc(t.title)}"><span class="mono muted">${esc(t.code)}</span> ${esc(t.title)}</div><div class="g-track" style="width:${W}px">${bar(t.start, t.end, c, 'task' + (t.status === 'done' ? ' done' : ''), t.code, `data-task="${t.id}"`)}</div></div>`);
+    });
+  });
+  const todayX = M >= 1 && M <= dur ? (() => { const t = today(); const dim = new Date(t.getFullYear(), t.getMonth() + 1, 0).getDate(); return (M - 1) * cw + cw * (t.getDate() / dim); })() : null;
+  return header(p, 'Timeline', filterBar(p)) + `
+  <div class="legend"><span><i class="wpdot" style="background:var(--accent);width:22px"></i>Work package / task (months)</span><span><span class="g-mark" style="position:static;margin:0"><i></i></span>Deliverable</span><span><span class="g-mark ms" style="position:static;margin:0"><i></i></span>Milestone</span><span><span class="g-mark ok" style="position:static;margin:0"><i></i></span>Done</span><span><i style="width:2px;height:14px;background:var(--bad);display:inline-block"></i>Today (M${M})</span></div>
+  <div class="gantt"><div class="g-inner" style="width:${W + 230}px">
+    <div class="g-row" style="position:sticky;top:0"><div class="g-lab label" style="display:flex;align-items:center">Project month</div><div class="g-months" style="width:${W}px">${months}</div></div>
+    ${rows.join('') || `<div class="g-row"><div class="g-lab muted">No work packages yet</div><div></div></div>`}
+    ${todayX != null ? `<div class="g-today" style="left:${todayX + (window.innerWidth <= 720 ? 140 : 230)}px"></div>` : ''}
+  </div></div>`;
+}
+
+function vDeliverables(p) {
+  const ds = p.deliverables.filter(passes).sort((a, b) => a.month - b.month || codeSort(a, b));
+  const ms = p.milestones.filter(m => !S.filters.wp || m.wp === S.filters.wp).sort((a, b) => a.month - b.month || codeSort(a, b));
+  return header(p, 'Deliverables & milestones', `${filterBar(p)}<button class="btn" data-act="addms">+ Milestone</button><button class="btn primary" data-act="adddel">+ Deliverable</button>`) + `
+  <section class="panel"><div class="panel-h"><h2>Deliverables</h2><span class="muted">${p.deliverables.filter(delDone).length} of ${p.deliverables.length} submitted</span></div>
+  ${ds.length ? `<div class="tbl-wrap"><table><thead><tr><th>No.</th><th>Title</th><th>WP</th><th>Lead</th><th>Type</th><th>Diss.</th><th>Due</th><th>Status</th></tr></thead><tbody>
+  ${ds.map(d => `<tr data-del="${d.id}"><td class="code">${esc(d.code)}</td><td>${esc(d.title)}</td><td class="nw">${wpTag(p, d.wp)}</td><td class="nw">${esc(ptShort(p, d.lead))}</td><td class="code">${esc(d.type)}</td><td class="code">${esc(d.diss)}</td><td class="nw"><span class="mono">M${d.month}</span> <span class="muted">${monthLabel(p, d.month)}</span></td><td class="nw">${delOverdue(p, d) ? '<span class="chip bad">Overdue</span> ' : ''}${statusChip(DEL_STATUS, d.status)}</td></tr>`).join('')}
+  </tbody></table></div>` : '<div class="empty">No deliverables yet. Add them from your Grant Agreement (Annex 1, Part A).</div>'}</section>
+  <section class="panel"><div class="panel-h"><h2>Milestones</h2></div>
+  ${ms.length ? `<div class="tbl-wrap"><table><thead><tr><th>No.</th><th>Title</th><th>WP</th><th>Due</th><th>Means of verification</th><th>Status</th></tr></thead><tbody>
+  ${ms.map(m => `<tr data-ms="${m.id}"><td class="code">${esc(m.code)}</td><td>${esc(m.title)}</td><td class="nw">${wpTag(p, m.wp)}</td><td class="nw"><span class="mono">M${m.month}</span> <span class="muted">${monthLabel(p, m.month)}</span></td><td>${esc(m.verification)}</td><td class="nw">${m.achieved ? '<span class="chip ok">Achieved</span>' : msOverdue(p, m) ? '<span class="chip bad">Overdue</span>' : '<span class="chip">Pending</span>'}</td></tr>`).join('')}
+  </tbody></table></div>` : '<div class="empty">No milestones yet.</div>'}</section>`;
+}
+
+function vWps(p) {
+  return header(p, 'Work packages', `<button class="btn primary" data-act="addwp">+ Work package</button>`) + `<section class="panel">
+  ${p.wps.length ? `<div class="tbl-wrap"><table><thead><tr><th>WP</th><th>Title</th><th>Lead</th><th>Months</th><th>Tasks</th><th>Deliverables</th></tr></thead><tbody>
+  ${sortWps(p).map(w => { const ts = p.tasks.filter(t => t.wp === w.id), ds = p.deliverables.filter(d => d.wp === w.id); return `<tr data-wp="${w.id}"><td class="nw">${wpTag(p, w.id)}</td><td>${esc(w.title)}</td><td class="nw">${esc(ptShort(p, w.lead))}</td><td class="nw mono">M${w.start}–M${w.end}</td><td class="num">${ts.filter(t => t.status === 'done').length}/${ts.length}</td><td class="num">${ds.filter(delDone).length}/${ds.length}</td></tr>`; }).join('')}
+  </tbody></table></div>` : '<div class="empty">No work packages yet. Most EU projects start with WP1 for management and coordination.</div>'}</section>`;
+}
+
+function vPartners(p) {
+  return header(p, 'Partners', `<button class="btn primary" data-act="addpartner">+ Partner</button>`) + `<section class="panel">
+  ${p.partners.length ? `<div class="tbl-wrap"><table><thead><tr><th>#</th><th>Short name</th><th>Legal name</th><th>Country</th><th>Role</th><th>Contact</th><th>Leads</th></tr></thead><tbody>
+  ${p.partners.map((x, i) => { const wl = p.wps.filter(w => w.lead === x.id).map(w => 'WP' + w.num); const dl = p.deliverables.filter(d => d.lead === x.id).length; return `<tr data-pt="${x.id}"><td class="num mono">${i + 1}</td><td class="code"><b>${esc(x.short)}</b></td><td>${esc(x.name)}</td><td class="code">${esc(x.country)}</td><td class="nw">${x.role === 'Coordinator' ? '<span class="chip info">Coordinator</span>' : esc(x.role)}</td><td>${esc(x.contact)}</td><td class="nw muted">${[wl.join(', '), dl ? dl + ' deliverable' + (dl > 1 ? 's' : '') : ''].filter(Boolean).join(' · ') || '—'}</td></tr>`; }).join('')}
+  </tbody></table></div>` : '<div class="empty">No partners yet. Add the coordinator first.</div>'}</section>`;
+}
+
+function backupDialog() {
+  const json = JSON.stringify({ app: 'consortium-desk', version: 1, exported: new Date().toISOString(), projects: S.projects }, null, 1);
+  const root = $('#modalRoot');
+  root.innerHTML = `<div class="scrim" id="scrim"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="bTitle">
+  <div class="modal-h"><h2 id="bTitle">Backup &amp; restore</h2><button class="btn ghost sm" id="bClose" aria-label="Close">✕</button></div>
+  <div style="padding:16px 20px 20px;display:grid;gap:14px">
+    <p class="muted" style="margin:0">Your data is saved in this browser only. Download or copy a backup regularly, and use it to move your projects to another computer or share them with a colleague.</p>
+    <div class="toolbar"><button class="btn primary" id="bDown">Download backup (.json)</button><button class="btn" id="bCopy">Copy to clipboard</button></div>
+    <textarea class="inp backup" id="bText" readonly aria-label="Backup data">${esc(json)}</textarea>
+    <h3>Restore</h3>
+    <p class="muted" style="margin:0">Choose a backup file or paste backup text. Projects in it are added next to your current ones.</p>
+    <div class="toolbar"><input type="file" id="bFile" accept=".json,application/json"><button class="btn" id="bPasteBtn">Restore from pasted text</button></div>
+    <textarea class="inp backup" id="bPaste" style="min-height:80px" placeholder="Paste backup text here" aria-label="Paste backup"></textarea>
+  </div></div></div>`;
+  const close = () => root.innerHTML = '';
+  $('#bClose').onclick = close;
+  $('#scrim').onmousedown = e => { if (e.target.id === 'scrim') close(); };
+  $('#bDown').onclick = () => {
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
+    a.download = `consortium-desk-backup-${iso(today())}.json`; document.body.appendChild(a); a.click(); a.remove();
+    toast('Backup downloaded');
+  };
+  $('#bCopy').onclick = () => {
+    const ta = $('#bText');
+    (navigator.clipboard ? navigator.clipboard.writeText(json) : Promise.reject()).then(() => toast('Backup copied'), () => { ta.focus(); ta.select(); toast('Press Ctrl+C / ⌘C to copy'); });
+  };
+  const restore = text => {
+    try {
+      const d = JSON.parse(text); const list = Array.isArray(d.projects) ? d.projects : (d.acronym ? [d] : null);
+      if (!list || !list.length) throw new Error();
+      list.forEach(pr => { if (S.projects.some(x => x.id === pr.id)) pr.id = uid(); ['partners', 'wps', 'tasks', 'deliverables', 'milestones'].forEach(k => pr[k] = pr[k] || []); S.projects.push(pr); });
+      S.current = list[0].id; save(); close(); render(); toast(`Restored ${list.length} project${list.length > 1 ? 's' : ''}`);
+    } catch (e) { toast('That is not a Consortium Desk backup. Check the file and try again.'); }
+  };
+  $('#bFile').onchange = e => { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => restore(r.result); r.readAsText(f); };
+  $('#bPasteBtn').onclick = () => restore($('#bPaste').value);
+}
+
+// ---------- Render & events ----------
+const RENDER = { overview: vOverview, board: vBoard, timeline: vTimeline, deliverables: vDeliverables, wps: vWps, partners: vPartners };
+function render() {
+  const p = P(); S.current = p.id;
+  $('#projSelect').innerHTML = S.projects.map(x => `<option value="${x.id}"${x.id === p.id ? ' selected' : ''}>${esc(x.acronym)}</option>`).join('');
+  const counts = { board: p.tasks.filter(t => t.status !== 'done').length, deliverables: p.deliverables.length, wps: p.wps.length, partners: p.partners.length };
+  $('#nav').innerHTML = VIEWS.map(([k, l]) => `<button type="button" data-view="${k}"${S.view === k ? ' aria-current="page"' : ''}>${l}${counts[k] != null ? `<span class="count">${counts[k]}</span>` : ''}</button>`).join('');
+  $('#view').innerHTML = (RENDER[S.view] || vOverview)(p);
+  document.title = `${p.acronym} · Consortium Desk`;
+}
+
+document.addEventListener('click', e => {
+  const p = P(), el = e.target.closest('[data-view],[data-act],[data-task],[data-del],[data-ms],[data-wp],[data-pt],[data-ov],[data-addin]');
+  if (!el || el.closest('#modalRoot')) return;
+  const d = el.dataset;
+  if (d.view) { S.view = d.view; save(); render(); $('.main').scrollTop = 0; return; }
+  if (d.addin) return editTask(p, null, { status: d.addin, wp: S.filters.wp || undefined });
+  if (d.ov) return window.__ov[+d.ov].open();
+  if (d.task) return editTask(p, p.tasks.find(t => t.id === d.task));
+  if (d.del) return editDeliverable(p, p.deliverables.find(x => x.id === d.del));
+  if (d.ms) return editMilestone(p, p.milestones.find(x => x.id === d.ms));
+  if (d.wp) return editWp(p, p.wps.find(x => x.id === d.wp));
+  if (d.pt) return editPartner(p, p.partners.find(x => x.id === d.pt));
+  ({
+    editproj: () => editProject(p), newproj: () => editProject(null, true),
+    addtask: () => editTask(p, null, S.filters.wp ? { wp: S.filters.wp } : {}), adddel: () => editDeliverable(p), addms: () => editMilestone(p),
+    addwp: () => editWp(p), addpartner: () => editPartner(p),
+    dropsample: () => { S.projects = S.projects.filter(x => !x.example); if (!S.projects.length) return editProject(null, true); S.current = S.projects[0].id; save(); render(); },
+  }[d.act] || (() => { }))();
+});
+document.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('.card,.row') && !e.target.closest('#modalRoot')) { e.preventDefault(); e.target.click(); } });
+document.addEventListener('change', e => {
+  if (e.target.id === 'projSelect') { S.current = e.target.value; S.filters = {}; save(); render(); }
+  if (e.target.id === 'fWp') { S.filters.wp = e.target.value; save(); render(); }
+  if (e.target.id === 'fPt') { S.filters.pt = e.target.value; save(); render(); }
+});
+document.addEventListener('input', e => {
+  if (e.target.id === 'fQ') { S.filters.q = e.target.value; save(); const pos = e.target.selectionStart; render(); const q = $('#fQ'); q.focus(); q.setSelectionRange(pos, pos); }
+});
+// Drag & drop on the board
+let dragId = null;
+document.addEventListener('dragstart', e => { const c = e.target.closest && e.target.closest('.card'); if (!c) return; dragId = c.dataset.task; c.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', dragId); } catch (_) { } });
+document.addEventListener('dragend', () => { dragId = null; document.querySelectorAll('.dragging,.drop').forEach(x => x.classList.remove('dragging', 'drop')); });
+document.addEventListener('dragover', e => { const col = e.target.closest && e.target.closest('.col'); if (!col || !dragId) return; e.preventDefault(); document.querySelectorAll('.col.drop').forEach(x => x !== col && x.classList.remove('drop')); col.classList.add('drop'); });
+document.addEventListener('drop', e => { const col = e.target.closest && e.target.closest('.col'); if (!col || !dragId) return; e.preventDefault(); const t = P().tasks.find(x => x.id === dragId); if (t) { t.status = col.dataset.col; save(); render(); } });
+
+$('#btnNewProj').onclick = () => editProject(null, true);
+$('#btnBackup').onclick = backupDialog;
+render();
+})();
+</script>
+</body>
+</html>
