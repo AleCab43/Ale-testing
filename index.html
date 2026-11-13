@@ -224,6 +224,7 @@ td.nw { white-space: nowrap; }
     <nav class="nav" id="nav"></nav>
     <div class="side-foot">
       <button class="btn ghost" id="btnNewProj" type="button">+ New project</button>
+      <button class="btn ghost" id="btnImreg" type="button" title="Creates a new project with the tasks for an IMREG (DG REGIO) proposal by Context Romania">+ IMREG proposal template</button>
       <button class="btn ghost" id="btnBackup" type="button">Backup &amp; restore</button>
     </div>
   </aside>
@@ -240,7 +241,7 @@ const TASK_STATUS = [['todo', 'To do'], ['doing', 'In progress'], ['review', 'In
 const DEL_STATUS = [['planned', 'Planned'], ['drafting', 'Drafting'], ['review', 'Internal review'], ['submitted', 'Submitted'], ['approved', 'Approved by EC']];
 const DEL_TYPES = [['R', 'R — Document, report'], ['DEM', 'DEM — Demonstrator, pilot, prototype'], ['DEC', 'DEC — Website, dissemination, communication'], ['DATA', 'DATA — Data sets, microdata'], ['DMP', 'DMP — Data management plan'], ['ETHICS', 'ETHICS — Ethics'], ['SECURITY', 'SECURITY — Security'], ['OTHER', 'OTHER']];
 const DISS = [['PU', 'PU — Public'], ['SEN', 'SEN — Sensitive'], ['R-UE/EU-R', 'R-UE/EU-R — EU classified']];
-const PROGRAMMES = ['Horizon Europe', 'Erasmus+', 'Interreg', 'LIFE', 'Digital Europe', 'CERV', 'Creative Europe', 'EU4Health', 'CEF', 'Other'];
+const PROGRAMMES = ['Horizon Europe', 'IMREG (DG REGIO)', 'Erasmus+', 'Interreg', 'LIFE', 'Digital Europe', 'CERV', 'Creative Europe', 'EU4Health', 'CEF', 'Other'];
 const ROLES = ['Coordinator', 'Beneficiary', 'Affiliated entity', 'Associated partner', 'Subcontractor'];
 const VIEWS = [['overview', 'Overview'], ['board', 'Tasks'], ['timeline', 'Timeline'], ['deliverables', 'Deliverables & milestones'], ['wps', 'Work packages'], ['partners', 'Partners']];
 
@@ -302,6 +303,61 @@ function sampleProject() {
   M('MS2', 'Architecture validated', w3, 14, 'D3.1 approved by the steering committee', false);
   M('MS3', 'Pilots launched', w4, 18, 'All three pilot sites operational', false);
   M('MS4', 'Website online', w5, 4, 'D5.1 live', true);
+  return p;
+}
+
+// ---------- Template: IMREG proposal (DG REGIO, Information Measures for EU Cohesion Policy) ----------
+// Proposal-preparation project for Context Romania. Months are preparation months, not the action's months.
+// No call dates or figures are invented: anything that must come from the call document is marked [TO CONFIRM].
+function imregTemplate() {
+  const TC = '[TO CONFIRM]';
+  const p = {
+    id: uid(), acronym: 'IMREG', template: 'imreg', programme: 'IMREG (DG REGIO)', grant: '',
+    title: `IMREG proposal, Context Romania (call IMREG-YYYY-INFOME ${TC}, deadline ${TC})`,
+    start: iso(today()).slice(0, 7), duration: 3, periods: '',
+    partners: [], wps: [], tasks: [], deliverables: [], milestones: []
+  };
+  const ctx = { id: uid(), short: 'CTXRO', name: 'Context Romania', pic: '885595257', country: 'RO', role: 'Coordinator', contact: '' };
+  p.partners.push(ctx);
+  const W = (num, title, start, end) => { const x = { id: uid(), num, title, lead: ctx.id, start, end }; p.wps.push(x); return x.id; };
+  const w1 = W(1, 'Eligibility and fit', 1, 1);
+  const w2 = W(2, 'Media concept and audience reach', 1, 2);
+  const w3 = W(3, 'Part B drafting (award criteria)', 1, 3);
+  const w4 = W(4, 'Budget', 2, 3);
+  const w5 = W(5, 'Evaluator review and submission', 3, 3);
+  const T = (code, title, wp, start, end, notes, priority = 'normal') => p.tasks.push({ id: uid(), code, title, wp, lead: ctx.id, assignee: '', status: 'todo', priority, start, end, due: '', notes });
+  T('T1.1', 'Eligibility and fit check: go / no-go', w1, 1, 1,
+    `Applicant: Context Romania, PIC 885595257. Check legal status and applicant type against the call, and the exclusion of authorities in charge of implementing Cohesion Policy programmes (e.g. managing authorities under the CPR). Check PIC validation in the Participant Register and financial capacity. Cite call section and page for each point ${TC}. Output: go / no-go note.`, 'high');
+  T('T1.2', 'Read the call document and fix the key terms', w1, 1, 1,
+    `From the current IMREG call document only, record: call ID, submission deadline, maximum grant, funding rate, action duration, mono/multi-beneficiary, budget-based or lump sum, award criteria wording, weights and thresholds. All ${TC} until checked against the call and the topic page on the Funding & Tenders Portal. Then set the real deadline on milestone MS2 and the task dates.`, 'high');
+  T('T2.1', 'Media and content concept', w2, 1, 2,
+    `Angle; formats (reportage series, documentaries, podcasts, data journalism, events, social video); languages; regions covered; the specific Cohesion Policy projects or themes to feature (ERDF, Cohesion Fund, ESF+, Interreg, Just Transition Fund, TSI). Concrete stories, places and people, not policy jargon.`);
+  T('T2.2', 'Audience and reach plan with measurable KPIs', w2, 2, 2,
+    `KPIs with a number, channel and date for each: audience numbers, impressions, airtime, articles, engagement, regional/local outlets reached. Name how each KPI will be verified (analytics, audience measurement, media monitoring, partner reports). Targets ${TC}.`);
+  T('T3.1', 'Part B: Relevance', w3, 1, 3, `Use the call's own criterion wording and weight ${TC}.`);
+  T('T3.2', 'Part B: Quality of the proposed action', w3, 2, 3, `Use the call's own criterion wording and weight ${TC}.`);
+  T('T3.3', 'Part B: Project management', w3, 2, 3, `Use the call's own criterion wording and weight ${TC}.`);
+  T('T3.4', 'Part B: Impact and dissemination', w3, 2, 3, `Use the call's own criterion wording and weight ${TC}. Link to the KPIs from T2.2.`);
+  T('T3.5', 'Editorial independence and quality-control section', w3, 2, 3,
+    `Show that content is objective and that the Commission does not control editorial choices. Describe how balance, accuracy, fact-checking and corrections are handled, and who signs off.`);
+  T('T3.6', 'Publication calendar and work plan with deliverables', w3, 2, 3,
+    `Every promised output gets a number, a channel and a date. Dates stay ${TC} until the action start date is known.`);
+  T('T4.1', 'Draft budget', w4, 2, 3, `Cost lines: staff, production, distribution, translation, subcontracting. Unit costs and totals ${TC}.`);
+  T('T4.2', 'Budget check: co-financing rate and grant ceiling', w4, 3, 3,
+    `Check that the EU grant does not exceed the funding rate (typically up to 80% of eligible costs) or the grant ceiling (typically up to EUR 200,000). Both ${TC} against the current call. Confirm Context Romania's own co-financing source.`, 'high');
+  T('T5.1', 'Evaluator review: score the draft and list fixes', w5, 3, 3,
+    `Act as a DG REGIO evaluator: score each award criterion against the call's scale and thresholds ${TC}, list weaknesses and fixes, and check that every placeholder marked ${TC} is resolved.`);
+  T('T5.2', 'Final fixes, Part A forms and submission', w5, 3, 3,
+    `Part A: Context Romania, PIC 885595257. Submit on the Funding & Tenders Portal before the deadline ${TC}. Keep the submission receipt.`, 'high');
+  const D = (code, title, wp, month) => p.deliverables.push({ id: uid(), code, title, wp, lead: ctx.id, type: 'R', diss: 'SEN', month, status: 'planned' });
+  D('D1.1', 'Go / no-go note (eligibility and fit)', w1, 1);
+  D('D2.1', 'Media concept and audience/KPI plan', w2, 2);
+  D('D3.1', 'Part B, complete draft', w3, 3);
+  D('D4.1', 'Budget table, checked against funding rate and ceiling', w4, 3);
+  D('D5.1', 'Evaluator scorecard and fix list', w5, 3);
+  const M = (code, title, wp, month, verification) => p.milestones.push({ id: uid(), code, title, wp, month, verification, achieved: false });
+  M('MS1', 'Go decision', w1, 1, 'D1.1 approved');
+  M('MS2', 'Proposal submitted', w5, 3, `Funding & Tenders Portal submission receipt. Call deadline ${TC}`);
   return p;
 }
 
@@ -424,6 +480,7 @@ function editPartner(p, x) {
       { k: 'short', label: 'Short name', req: true, ph: 'e.g. UNIX' },
       { k: 'country', label: 'Country code', ph: 'e.g. DE' },
       { k: 'name', label: 'Legal name', full: true, req: true },
+      { k: 'pic', label: 'PIC', ph: '9 digits' },
       { k: 'role', label: 'Role', type: 'select', options: ROLES },
       { k: 'contact', label: 'Contact person' },
     ],
@@ -636,8 +693,8 @@ function vWps(p) {
 
 function vPartners(p) {
   return header(p, 'Partners', `<button class="btn primary" data-act="addpartner">+ Partner</button>`) + `<section class="panel">
-  ${p.partners.length ? `<div class="tbl-wrap"><table><thead><tr><th>#</th><th>Short name</th><th>Legal name</th><th>Country</th><th>Role</th><th>Contact</th><th>Leads</th></tr></thead><tbody>
-  ${p.partners.map((x, i) => { const wl = p.wps.filter(w => w.lead === x.id).map(w => 'WP' + w.num); const dl = p.deliverables.filter(d => d.lead === x.id).length; return `<tr data-pt="${x.id}"><td class="num mono">${i + 1}</td><td class="code"><b>${esc(x.short)}</b></td><td>${esc(x.name)}</td><td class="code">${esc(x.country)}</td><td class="nw">${x.role === 'Coordinator' ? '<span class="chip info">Coordinator</span>' : esc(x.role)}</td><td>${esc(x.contact)}</td><td class="nw muted">${[wl.join(', '), dl ? dl + ' deliverable' + (dl > 1 ? 's' : '') : ''].filter(Boolean).join(' · ') || '—'}</td></tr>`; }).join('')}
+  ${p.partners.length ? `<div class="tbl-wrap"><table><thead><tr><th>#</th><th>Short name</th><th>Legal name</th><th>PIC</th><th>Country</th><th>Role</th><th>Contact</th><th>Leads</th></tr></thead><tbody>
+  ${p.partners.map((x, i) => { const wl = p.wps.filter(w => w.lead === x.id).map(w => 'WP' + w.num); const dl = p.deliverables.filter(d => d.lead === x.id).length; return `<tr data-pt="${x.id}"><td class="num mono">${i + 1}</td><td class="code"><b>${esc(x.short)}</b></td><td>${esc(x.name)}</td><td class="code">${esc(x.pic || '')}</td><td class="code">${esc(x.country)}</td><td class="nw">${x.role === 'Coordinator' ? '<span class="chip info">Coordinator</span>' : esc(x.role)}</td><td>${esc(x.contact)}</td><td class="nw muted">${[wl.join(', '), dl ? dl + ' deliverable' + (dl > 1 ? 's' : '') : ''].filter(Boolean).join(' · ') || '—'}</td></tr>`; }).join('')}
   </tbody></table></div>` : '<div class="empty">No partners yet. Add the coordinator first.</div>'}</section>`;
 }
 
@@ -727,6 +784,7 @@ document.addEventListener('drop', e => { const col = e.target.closest && e.targe
 
 $('#btnNewProj').onclick = () => editProject(null, true);
 $('#btnBackup').onclick = backupDialog;
+$('#btnImreg').onclick = () => { const np = imregTemplate(); S.projects.push(np); S.current = np.id; S.view = 'overview'; S.filters = {}; save(); render(); toast('IMREG proposal template added'); };
 render();
 })();
 </script>
