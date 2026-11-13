@@ -199,7 +199,7 @@ td.nw { white-space: nowrap; }
 @media (max-width: 720px) {
   .app { grid-template-columns: minmax(0,1fr); grid-template-rows: auto minmax(0,1fr); }
   .side { border-right: 0; border-bottom: 1px solid var(--line); padding: 12px 16px; gap: 10px; overflow: visible; }
-  .side-foot { display: none; }
+  .side-foot { grid-auto-flow: column; justify-content: start; margin-top: 0; }
   .nav { grid-auto-flow: column; overflow-x: auto; gap: 4px; }
   .nav button { white-space: nowrap; padding: 6px 10px; }
   .nav .count { display: none; }
@@ -371,7 +371,8 @@ function openForm({ title, fields, data = {}, onSave, onDelete, deleteLabel = 'D
       const el = $('#f_' + fd.k);
       let v = fd.type === 'checkbox' ? el.checked : el.value.trim();
       if (fd.type === 'number') v = v === '' ? '' : Number(v);
-      if (fd.req && (v === '' || v == null)) { el.focus(); el.setCustomValidity('Required'); el.reportValidity(); el.oninput = () => el.setCustomValidity(''); return; }
+      const bad = fd.req && (v === '' || v == null) ? 'Required' : fd.pattern && v !== '' && !fd.pattern.test(v) ? (fd.patternMsg || 'Invalid format') : '';
+      if (bad) { el.focus(); el.setCustomValidity(bad); el.reportValidity(); el.oninput = () => el.setCustomValidity(''); return; }
       out[fd.k] = v;
     }
     onSave(out); close(); save(); render();
@@ -393,7 +394,7 @@ function toast(msg) {
 const partnerOpts = p => [['', '—'], ...p.partners.map(x => [x.id, `${x.short} — ${x.name}`])];
 const wpOpts = p => [['', '—'], ...sortWps(p).map(w => [w.id, `WP${w.num} — ${w.title}`])];
 
-function editProject(proj, isNew) {
+function editProject(proj, isNew, dropExamples = false) {
   openForm({
     title: isNew ? 'New project' : 'Project details',
     data: proj || { programme: 'Horizon Europe', duration: 36, start: iso(today()).slice(0, 7), periods: '18, 36' },
@@ -402,12 +403,12 @@ function editProject(proj, isNew) {
       { k: 'programme', label: 'Programme', type: 'select', options: PROGRAMMES },
       { k: 'title', label: 'Full title', full: true },
       { k: 'grant', label: 'Grant agreement no.', ph: '101…' },
-      { k: 'start', label: 'Start month (M1)', type: 'month', req: true },
+      { k: 'start', label: 'Start month (M1)', type: 'month', req: true, ph: 'YYYY-MM', pattern: /^\d{4}-(0[1-9]|1[0-2])$/, patternMsg: 'Use the format YYYY-MM, e.g. 2025-01' },
       { k: 'duration', label: 'Duration (months)', type: 'number', min: 1, max: 120, req: true },
       { k: 'periods', label: 'Reporting periods end at month', hint: 'Comma-separated, e.g. 18, 36' },
     ],
     onSave: v => {
-      if (isNew) { const np = { id: uid(), partners: [], wps: [], tasks: [], deliverables: [], milestones: [], ...v }; S.projects.push(np); S.current = np.id; S.view = 'overview'; }
+      if (isNew) { const np = { id: uid(), partners: [], wps: [], tasks: [], deliverables: [], milestones: [], ...v }; if (dropExamples) S.projects = S.projects.filter(x => !x.example); S.projects.push(np); S.current = np.id; S.view = 'overview'; S.filters = {}; }
       else { Object.assign(proj, v); delete proj.example; }
     },
     onDelete: isNew ? null : () => {
@@ -545,7 +546,7 @@ function vOverview(p) {
   return header(p, p.title || p.acronym, `<button class="btn" data-act="editproj">Project details</button><button class="btn primary" data-act="addtask">+ Task</button>`) + `
   <section class="panel clock">
     <div class="panel-h"><h2>${status}</h2><span class="muted">${monthLabel(p, 1)} – ${monthLabel(p, dur)}${nextRp ? ` · next periodic report covers up to <b>M${nextRp}</b> (${monthLabel(p, nextRp)})` : ''}</span></div>
-    <div class="clock-bar" role="img" aria-label="${esc(status)}"><div class="clock-fill" style="width:${100 * clampM / dur}%"></div>${rpMarks}${M >= 1 && M <= dur ? `<div class="clock-now" style="left:${100 * clampM / dur}%">M${M}</div>` : ''}</div>
+    <div class="clock-bar" role="img" aria-label="${esc(status)}"><div class="clock-fill" style="width:${100 * clampM / dur}%"></div>${rpMarks}${M >= 1 && M <= dur ? `<div class="clock-now" style="left:${100 * clampM / dur}%${clampM / dur < .12 ? ';transform:none;padding:0 0 0 6px' : ''}">M${M}</div>` : ''}</div>
     <div class="stats">
       <div class="stat"><span class="label">Open tasks</span><b>${openTasks}</b></div>
       <div class="stat"><span class="label">Deliverables due ≤ 90 days</span><b>${delSoon}</b></div>
@@ -563,8 +564,8 @@ function vOverview(p) {
 
 function filterBar(p, extra = '') {
   const f = S.filters;
-  return `<select class="inp" id="fWp" aria-label="Filter by work package"><option value="">All WPs</option>${sortWps(p).map(w => `<option value="${w.id}"${f.wp === w.id ? ' selected' : ''}>WP${w.num}</option>`).join('')}</select>
-  <select class="inp" id="fPt" aria-label="Filter by partner"><option value="">All partners</option>${p.partners.map(x => `<option value="${x.id}"${f.pt === x.id ? ' selected' : ''}>${esc(x.short)}</option>`).join('')}</select>${extra}`;
+  return `<select class="inp" id="fWp" aria-label="Filter by work package"><option value="">All WPs</option>${sortWps(p).map(w => `<option value="${esc(w.id)}"${f.wp === w.id ? ' selected' : ''}>WP${w.num}</option>`).join('')}</select>
+  <select class="inp" id="fPt" aria-label="Filter by partner"><option value="">All partners</option>${p.partners.map(x => `<option value="${esc(x.id)}"${f.pt === x.id ? ' selected' : ''}>${esc(x.short)}</option>`).join('')}</select>${extra}`;
 }
 const passes = (x) => (!S.filters.wp || x.wp === S.filters.wp) && (!S.filters.pt || x.lead === S.filters.pt);
 
@@ -655,7 +656,9 @@ function backupDialog() {
     <div class="toolbar"><input type="file" id="bFile" accept=".json,application/json"><button class="btn" id="bPasteBtn">Restore from pasted text</button></div>
     <textarea class="inp backup" id="bPaste" style="min-height:80px" placeholder="Paste backup text here" aria-label="Paste backup"></textarea>
   </div></div></div>`;
-  const close = () => root.innerHTML = '';
+  const onKey = e => { if (e.key === 'Escape') close(); };
+  const close = () => { root.innerHTML = ''; document.removeEventListener('keydown', onKey); };
+  document.addEventListener('keydown', onKey);
   $('#bClose').onclick = close;
   $('#scrim').onmousedown = e => { if (e.target.id === 'scrim') close(); };
   $('#bDown').onclick = () => {
@@ -683,6 +686,8 @@ function backupDialog() {
 const RENDER = { overview: vOverview, board: vBoard, timeline: vTimeline, deliverables: vDeliverables, wps: vWps, partners: vPartners };
 function render() {
   const p = P(); S.current = p.id;
+  if (S.filters.wp && !wpById(p, S.filters.wp)) S.filters.wp = '';
+  if (S.filters.pt && !p.partners.some(x => x.id === S.filters.pt)) S.filters.pt = '';
   $('#projSelect').innerHTML = S.projects.map(x => `<option value="${x.id}"${x.id === p.id ? ' selected' : ''}>${esc(x.acronym)}</option>`).join('');
   const counts = { board: p.tasks.filter(t => t.status !== 'done').length, deliverables: p.deliverables.length, wps: p.wps.length, partners: p.partners.length };
   $('#nav').innerHTML = VIEWS.map(([k, l]) => `<button type="button" data-view="${k}"${S.view === k ? ' aria-current="page"' : ''}>${l}${counts[k] != null ? `<span class="count">${counts[k]}</span>` : ''}</button>`).join('');
@@ -695,7 +700,7 @@ document.addEventListener('click', e => {
   if (!el || el.closest('#modalRoot')) return;
   const d = el.dataset;
   if (d.view) { S.view = d.view; save(); render(); $('.main').scrollTop = 0; return; }
-  if (d.addin) return editTask(p, null, { status: d.addin, wp: S.filters.wp || undefined });
+  if (d.addin) return editTask(p, null, S.filters.wp ? { status: d.addin, wp: S.filters.wp } : { status: d.addin });
   if (d.ov) return window.__ov[+d.ov].open();
   if (d.task) return editTask(p, p.tasks.find(t => t.id === d.task));
   if (d.del) return editDeliverable(p, p.deliverables.find(x => x.id === d.del));
@@ -706,7 +711,7 @@ document.addEventListener('click', e => {
     editproj: () => editProject(p), newproj: () => editProject(null, true),
     addtask: () => editTask(p, null, S.filters.wp ? { wp: S.filters.wp } : {}), adddel: () => editDeliverable(p), addms: () => editMilestone(p),
     addwp: () => editWp(p), addpartner: () => editPartner(p),
-    dropsample: () => { S.projects = S.projects.filter(x => !x.example); if (!S.projects.length) return editProject(null, true); S.current = S.projects[0].id; save(); render(); },
+    dropsample: () => { if (!S.projects.some(x => !x.example)) return editProject(null, true, true); S.projects = S.projects.filter(x => !x.example); S.current = S.projects[0].id; S.filters = {}; save(); render(); },
   }[d.act] || (() => { }))();
 });
 document.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('.card,.row') && !e.target.closest('#modalRoot')) { e.preventDefault(); e.target.click(); } });
