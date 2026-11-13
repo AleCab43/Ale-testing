@@ -16,6 +16,7 @@ Open `index.html` in any modern browser. To share it with your team, turn on Git
 - **Deliverables & milestones**: tables that follow Grant Agreement conventions: D-numbers, type (R, DEM, DEC, DATA…), dissemination level (PU/SEN), due month and status up to "Approved by EC".
 - **Work packages** and **Partners** (coordinator, beneficiaries, affiliated entities…).
 - Several projects side by side, with a project switcher.
+- **IMREG proposal template**: one click on *+ IMREG proposal template* creates a proposal-preparation project for Context Romania (PIC 885595257) for the DG REGIO IMREG call: eligibility go/no-go, media concept, audience/KPI plan, Part B sections per award criterion, editorial independence, publication calendar, budget check against the funding rate and ceiling, and an evaluator review. Call dates and figures are not filled in: they are marked [TO CONFIRM] until checked against the current call document. The start month defaults to the current month; change it in *Project details*.
 
 ## Your data
 
